@@ -1,0 +1,2 @@
+https://physionet.org/content/chbmit/1.0.0/
+https://www.kaggle.com/datasets/subirbiswas19/eeg-dataset

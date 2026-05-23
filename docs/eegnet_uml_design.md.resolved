@@ -1,0 +1,81 @@
+# UML Design for EEGNet
+
+This document provides a UML Class Diagram structure for the [EEGNet1D](file:///t:/suezier_p/models/network.py#6-36) class found in [models/network.py](file:///t:/suezier_p/models/network.py). This model is a 1D Convolutional Neural Network designed for EEG signal classification.
+
+## Class Diagram
+
+```mermaid
+classDiagram
+    class Module {
+        <<PyTorch>>
+        +forward(x)
+    }
+
+    class EEGNet1D {
+        -in_channels : int
+        -features : Sequential
+        -head : Sequential
+        +__init__(in_channels: int, num_classes: int, base: int)
+        +forward(x: Tensor) : Tensor
+    }
+
+    class Sequential_Features {
+        <<Layer Block>>
+        +Conv1d(in, base, k=7, p=3)
+        +BatchNorm1d(base)
+        +ReLU()
+        +MaxPool1d(2)
+        +Conv1d(base, base*2, k=7, p=3)
+        +BatchNorm1d(base*2)
+        +ReLU()
+        +MaxPool1d(2)
+        +Conv1d(base*2, base*4, k=5, p=2)
+        +BatchNorm1d(base*4)
+        +ReLU()
+        +MaxPool1d(2)
+        +Conv1d(base*4, base*4, k=3, p=1)
+        +BatchNorm1d(base*4)
+        +ReLU()
+    }
+
+    class Sequential_Head {
+        <<Layer Block>>
+        +AdaptiveAvgPool1d(1)
+        +Flatten()
+        +Linear(base*4, num_classes)
+    }
+
+    EEGNet1D --|> Module
+    EEGNet1D *-- Sequential_Features : contains
+    EEGNet1D *-- Sequential_Head : contains
+
+    note for EEGNet1D "Input Shape: (N, C, T)\nOutput Shape: (N, num_classes)"
+```
+
+## Architecture Details
+
+The [EEGNet1D](file:///t:/suezier_p/models/network.py#6-36) architecture consists of two main blocks: `features` (feature extraction) and `head` (classification).
+
+### `features` Block
+A stack of 1D convolutional layers that progressively increase channel depth while reducing temporal resolution.
+
+| Layer Type | Input Channels | Output Channels | Kernel Size | Padding | Activation | Pooling |
+|------------|----------------|-----------------|-------------|---------|------------|---------|
+| Conv1d | `in_channels` | `base` | 7 | 3 | ReLU | MaxPool1d(2) |
+| Conv1d | `base` | `base*2` | 7 | 3 | ReLU | MaxPool1d(2) |
+| Conv1d | `base*2` | `base*4` | 5 | 2 | ReLU | MaxPool1d(2) |
+| Conv1d | `base*4` | `base*4` | 3 | 1 | ReLU | - |
+
+### `head` Block
+A classification head that flattens the feature map and maps it to class probabilities (logits).
+
+1.  **AdaptiveAvgPool1d(1)**: Reduces the time dimension to 1 (Global Average Pooling).
+2.  **Flatten**: Reshapes the tensor to [(N, base*4)](file:///t:/suezier_p/models/network.py#294-331).
+3.  **Linear**: Fully connected layer mapping `base*4` to `num_classes`.
+
+## Usage
+
+```python
+# Factory creation
+model = create_model('eegnet', in_channels=19, num_classes=2)
+```
