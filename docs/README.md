@@ -166,7 +166,7 @@ This project is licensed under the MIT License.
 
 ## 👥 Authors
 
-- **Project Owner**: tanvs-j
+- **Project Owner**: Kuruva Purushotham
 
 ---
 
